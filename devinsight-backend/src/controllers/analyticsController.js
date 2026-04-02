@@ -1,32 +1,68 @@
-import { getCommits } from "../services/githubService.js";
+import axios from "axios";
 
-export const getAnalytics = async (req, res) => {
+const github = axios.create({
+  baseURL: "https://api.github.com",
+  headers: {
+    Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+    Accept: "application/vnd.github+json",
+  },
+});
+
+export const getRepos = async (req, res) => {
+  try {
+    const { owner } = req.query;
+    const response = await github.get(`/users/${owner}/repos`);
+    const repos = response.data.map((repo) => ({
+      id: repo.id,
+      name: repo.name,
+      description: repo.description || "No description",
+      language: repo.language || "Unknown",
+      stars: repo.stargazers_count,
+      forks: repo.forks_count,
+      openIssues: repo.open_issues_count,
+      lastCommit: new Date(repo.updated_at).toLocaleDateString(),
+      visibility: repo.private ? "private" : "public",
+    }));
+    res.json(repos);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch repos" });
+  }
+};
+
+export const getOverview = async (req, res) => {
   try {
     const { owner, repo } = req.query;
 
-    const commits = await getCommits(owner, repo);
+    // Fetch commits, PRs and contributors in parallel
+    const [commitsRes, prsRes, contributorsRes] = await Promise.all([
+      github.get(`/repos/${owner}/${repo}/commits`, { params: { per_page: 100 } }),
+      github.get(`/repos/${owner}/${repo}/pulls`, { params: { state: "all", per_page: 100 } }),
+      github.get(`/repos/${owner}/${repo}/contributors`, { params: { per_page: 100 } }),
+    ]);
 
-    // 📈 Group commits by date
-    const commitsByDate = {};
-    const contributors = {};
-
-    commits.forEach((commit) => {
+    // Commits over time — group by date
+    const commits_over_time = commitsRes.data.reduce((acc, commit) => {
       const date = commit.commit.author.date.split("T")[0];
-      const author = commit.commit.author.name;
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {});
 
-      // commits per day
-      commitsByDate[date] = (commitsByDate[date] || 0) + 1;
-
-      // commits per contributor
-      contributors[author] = (contributors[author] || 0) + 1;
-    });
+    // Contributors — name: commit count
+    const contributors = contributorsRes.data.reduce((acc, c) => {
+      acc[c.login] = c.contributions;
+      return acc;
+    }, {});
 
     res.json({
-      commits_over_time: commitsByDate,
-      contributors: contributors,
+      total_commits: commitsRes.data.length,
+      total_prs: prsRes.data.length,
+      total_contributors: contributorsRes.data.length,
+      commits_over_time,
+      contributors,
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to fetch analytics" });
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ error: "Failed to fetch overview" });
   }
 };

@@ -13,3 +13,10 @@ export const fetchAnalyticsData = async (owner: string, repo: string) => {
   });
   return res.data;
 };
+
+export const fetchRepos = async (owner: string) => {
+  const res = await api.get("/analytics/repos", {
+    params: { owner },
+  });
+  return res.data;
+};
