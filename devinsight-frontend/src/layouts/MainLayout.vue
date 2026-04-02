@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+import { useAppTheme } from "../composables/useAppTheme";
 
 const route = useRoute();
+const { isDark, toggleTheme } = useAppTheme();
 
 const breadcrumb = computed(() => {
   const map: Record<string, string> = {
@@ -72,13 +74,15 @@ const breadcrumb = computed(() => {
 
         <p class="nav-label" style="margin-top: 20px;">SETTINGS</p>
 
-        <div class="nav-item">
-          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="8" cy="8" r="2.5"/>
-            <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/>
-          </svg>
-          Settings
-        </div>
+        <router-link to="/settings" custom v-slot="{ isActive, navigate }">
+          <div :class="['nav-item', isActive && 'active']" @click="navigate">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="8" cy="8" r="2.5"/>
+              <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/>
+            </svg>
+            Settings
+          </div>
+        </router-link>
       </div>
 
       <!-- User footer -->
@@ -97,27 +101,32 @@ const breadcrumb = computed(() => {
 
     <!-- Topbar -->
     <v-app-bar flat height="52" class="topbar" border="b">
-      <div class="topbar-inner">
-        <!-- Breadcrumb -->
-        <div class="breadcrumb">
-          <span class="breadcrumb-root">DevInsight</span>
-          <span class="breadcrumb-sep">/</span>
-          <span class="breadcrumb-page">{{ breadcrumb }}</span>
+      <div class="topbar-right">
+        <div class="status-pill">
+          <div class="status-dot" />
+          <span class="status-text">LIVE</span>
         </div>
 
-        <!-- Right side -->
-        <div class="topbar-right">
-          <div class="status-pill">
-            <div class="status-dot" />
-            <span class="status-text">LIVE</span>
-          </div>
-          <v-btn icon size="small" variant="outlined" class="icon-btn">
-            <v-icon size="16">mdi-bell-outline</v-icon>
-          </v-btn>
-          <v-btn icon size="small" variant="outlined" class="icon-btn">
-            <v-icon size="16">mdi-cog-outline</v-icon>
-          </v-btn>
-        </div>
+        <!-- Theme toggle -->
+        <v-btn
+          icon
+          size="small"
+          variant="outlined"
+          class="icon-btn"
+          @click="toggleTheme"
+          :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+        >
+          <v-icon size="16">
+            {{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}
+          </v-icon>
+        </v-btn>
+
+        <v-btn icon size="small" variant="outlined" class="icon-btn">
+          <v-icon size="16">mdi-bell-outline</v-icon>
+        </v-btn>
+        <v-btn icon size="small" variant="outlined" class="icon-btn">
+          <v-icon size="16">mdi-cog-outline</v-icon>
+        </v-btn>
       </div>
     </v-app-bar>
 
@@ -130,7 +139,7 @@ const breadcrumb = computed(() => {
   </v-app>
 </template>
 
-<style scoped>
+<!-- <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 .sidebar {
@@ -322,5 +331,147 @@ const breadcrumb = computed(() => {
 .page-inner {
   padding: 24px;
   max-width: 1400px;
+} -->
+
+<style scoped>
+.sidebar {
+  background: rgb(var(--v-theme-surface)) !important;
+  border-right: 1px solid rgba(var(--v-border-color), 0.07) !important;
 }
+.logo-area {
+  border-bottom: 1px solid rgba(var(--v-border-color), 0.07);
+}
+.nav-item:hover {
+  background: rgba(var(--v-border-color), 0.05);
+  color: rgb(var(--v-theme-on-surface));
+}
+.nav-label {
+  color: rgba(var(--v-theme-on-surface), 0.4);
+}
+.nav-item {
+  color: rgba(var(--v-theme-on-surface), 0.45);
+}
+.sidebar-footer {
+  border-top: 1px solid rgba(var(--v-border-color), 0.07);
+}
+.user-row:hover {
+  background: rgba(var(--v-border-color), 0.05);
+}
+.user-name {
+  color: rgb(var(--v-theme-on-surface));
+}
+.user-role {
+  color: rgba(var(--v-theme-on-surface), 0.4);
+}
+.topbar {
+  background: rgb(var(--v-theme-surface)) !important;
+  border-bottom: 1px solid rgba(var(--v-border-color), 0.07) !important;
+}
+.breadcrumb-root {
+  color: rgba(var(--v-theme-on-surface), 0.4);
+}
+.breadcrumb-sep {
+  color: rgba(var(--v-theme-on-surface), 0.4);
+}
+.breadcrumb-page {
+  color: rgb(var(--v-theme-on-surface));
+}
+.icon-btn {
+  border-color: rgba(var(--v-border-color), 0.12) !important;
+  color: rgba(var(--v-theme-on-surface), 0.5) !important;
+}
+.icon-btn:hover {
+  color: rgb(var(--v-theme-on-surface)) !important;
+}
+.main-content {
+  background: rgb(var(--v-theme-background)) !important;
+}
+
+/* Keep logo-mark, logo-dev, logo-insight, status-pill, nav-badge hardcoded
+   since they are brand colors that don't change with theme */
+.logo-mark {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: linear-gradient(135deg, #f5a623 0%, #e8870d 100%);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(245,166,35,0.3), 0 4px 12px rgba(245,166,35,0.15);
+}
+.logo-dev {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px; font-weight: 700; letter-spacing: -0.02em;
+  color: rgb(var(--v-theme-on-surface));
+}
+.logo-insight {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px; font-weight: 700; letter-spacing: -0.02em;
+  color: #f5a623;
+}
+.logo-area {
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 16px 14px;
+}
+.logo-text {
+  display: flex; flex-direction: column; line-height: 1.15;
+}
+.nav-section { padding: 14px 10px; }
+.nav-label {
+  font-size: 9px; font-family: 'Space Mono', monospace;
+  letter-spacing: 0.12em; padding: 0 8px; margin-bottom: 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+  margin-bottom: 2px; user-select: none;
+}
+.nav-item.active {
+  background: rgba(245, 166, 35, 0.1);
+  color: #f5a623;
+}
+.nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-badge {
+  margin-left: auto; font-size: 9px;
+  font-family: 'Space Mono', monospace;
+  background: rgba(245, 166, 35, 0.15);
+  color: #f5a623; padding: 2px 6px; border-radius: 4px;
+}
+.sidebar-footer { padding: 12px 10px; }
+.user-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 8px; cursor: pointer;
+  transition: background 0.15s;
+}
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px; font-weight: 700; color: #f5a623; flex-shrink: 0;
+}
+.user-name { font-size: 12px; font-weight: 500; }
+.user-role { font-size: 10px; font-family: 'Space Mono', monospace; }
+.topbar-inner {
+  display: flex; align-items: center;
+  justify-content: space-between; width: 100%; padding: 0 20px;
+}
+.breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.status-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(62, 207, 142, 0.08);
+  border: 1px solid rgba(62, 207, 142, 0.2);
+  padding: 4px 10px; border-radius: 20px;
+}
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #3ecf8e; animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.status-text {
+  font-size: 11px; font-family: 'Space Mono', monospace; color: #3ecf8e;
+}
+.page-inner { padding: 24px; max-width: 1400px; }
 </style>
